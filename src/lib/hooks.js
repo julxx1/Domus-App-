@@ -183,3 +183,91 @@ export function useCameras() {
 
   return { cameras, addCamera }
 }
+
+// ── Deberes diarios ───────────────────────────────────────────────────────────
+const DEBER_DEFAULTS = (hhId, createdBy) => [
+  { title: 'Paseo de la mascota', icon: 'paw',      assignee_ids: [], repeat: 'daily',    repeat_days: [0,1,2,3,4,5,6], time: null, household_id: hhId, created_by: createdBy },
+  { title: 'Gym',                 icon: 'flame',    assignee_ids: [], repeat: 'custom',   repeat_days: [0,2,4],          time: null, household_id: hhId, created_by: createdBy },
+  { title: 'Tareas escolares',    icon: 'pencil',   assignee_ids: [], repeat: 'weekdays', repeat_days: [0,1,2,3,4],      time: null, household_id: hhId, created_by: createdBy },
+  { title: 'Asistencia a karate', icon: 'sparkles', assignee_ids: [], repeat: 'custom',   repeat_days: [1,3],            time: null, household_id: hhId, created_by: createdBy },
+].map(d => ({ ...d, id: uid() }))
+
+function dayIndex(dateStr) {
+  return (new Date(dateStr + 'T12:00:00').getDay() + 6) % 7
+}
+
+function deberOnDay(deber, dateStr) {
+  const d = dayIndex(dateStr)
+  if (deber.repeat === 'daily') return true
+  if (deber.repeat === 'weekdays') return d <= 4
+  if (deber.repeat === 'custom') return (deber.repeat_days || []).includes(d)
+  return false
+}
+
+export function useDeberes(dateStr) {
+  const { profile } = useAuth()
+  const [deberes, setDeberes] = useState([])
+  const [checks, setChecks] = useState({})
+
+  function loadAll() {
+    if (!profile?.household_id) return
+    let all = store.get(`deberes_${profile.household_id}`, null)
+    if (all === null) {
+      all = DEBER_DEFAULTS(profile.household_id, profile.id)
+      store.set(`deberes_${profile.household_id}`, all)
+    }
+    setDeberes(dateStr ? all.filter(d => deberOnDay(d, dateStr)) : all)
+  }
+
+  function loadChecks() {
+    if (!profile?.household_id || !dateStr) return
+    setChecks(store.get(`deber_checks_${profile.household_id}_${dateStr}`, {}))
+  }
+
+  useEffect(() => { loadAll(); loadChecks() }, [profile?.household_id, dateStr])
+
+  function toggleCheck(deberId, userId) {
+    const key = `${deberId}_${userId}`
+    const all = store.get(`deber_checks_${profile.household_id}_${dateStr}`, {})
+    if (all[key]) delete all[key]
+    else all[key] = { deber_id: deberId, user_id: userId, completed_at: new Date().toISOString() }
+    store.set(`deber_checks_${profile.household_id}_${dateStr}`, all)
+    setChecks({ ...all })
+  }
+
+  function addDeber({ title, icon, assignee_ids, repeat, repeat_days, time }) {
+    const all = store.get(`deberes_${profile.household_id}`, [])
+    const d = { id: uid(), title, icon: icon || 'check', assignee_ids: assignee_ids || [], repeat, repeat_days: repeat_days || [], time: time || null, household_id: profile.household_id, created_by: profile.id }
+    all.push(d)
+    store.set(`deberes_${profile.household_id}`, all)
+    if (dateStr && deberOnDay(d, dateStr)) setDeberes(prev => [...prev, d])
+  }
+
+  function deleteDeber(id) {
+    const all = store.get(`deberes_${profile.household_id}`, []).filter(d => d.id !== id)
+    store.set(`deberes_${profile.household_id}`, all)
+    setDeberes(prev => prev.filter(d => d.id !== id))
+  }
+
+  function editDeber(id, updates) {
+    const all = store.get(`deberes_${profile.household_id}`, []).map(d => d.id === id ? { ...d, ...updates } : d)
+    store.set(`deberes_${profile.household_id}`, all)
+    loadAll()
+  }
+
+  function getWeekHistory() {
+    if (!profile?.household_id) return []
+    const allDef = store.get(`deberes_${profile.household_id}`, [])
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (6 - i))
+      const ds = d.toISOString().split('T')[0]
+      const dayDef = allDef.filter(def => deberOnDay(def, ds))
+      const dayChecks = store.get(`deber_checks_${profile.household_id}_${ds}`, {})
+      const myChecks = Object.values(dayChecks).filter(c => c.user_id === profile.id).length
+      const total = dayDef.length
+      return { dateStr: ds, day: ['L','M','X','J','V','S','D'][(d.getDay() + 6) % 7], total, myChecks, pct: total > 0 ? Math.round((myChecks / total) * 100) : 0 }
+    })
+  }
+
+  return { deberes, checks, toggleCheck, addDeber, deleteDeber, editDeber, getWeekHistory }
+}
