@@ -8,56 +8,60 @@ import { Pill, SectionTitle } from '../components/Shared'
 const NOTE_COLORS = ['#FFF4B8','#FFD6B8','#FFB8B8','#FFD0E4','#D8E8C8','#D0E8F0']
 const NOTE_ICONS = ['box','milk','bread','egg','tomato','apple','leaf','heart','star','cart']
 
-function StickyNote({ item, onToggle, onDelete }) {
+function StickyNote({ item, onToggle }) {
   const initials = item.profiles?.initial || '?'
   const color = item.profiles?.color || 'var(--d-terra-soft)'
   return (
     <div
       onClick={() => onToggle(item.id, item.done)}
       style={{
-        width: 100, height: 100,
+        width: 128, height: 128,
         background: item.color || '#FFF4B8',
         transform: `rotate(${item.rot || 0}deg)`,
-        borderRadius: 4,
-        boxShadow: '0 1px 2px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.08)',
-        padding: '10px 10px 8px',
+        borderRadius: 6,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.06), 0 6px 14px rgba(0,0,0,0.10)',
+        padding: '12px 12px 10px',
         position: 'relative', display: 'flex', flexDirection: 'column',
-        opacity: item.done ? 0.55 : 1, cursor: 'pointer',
+        opacity: item.done ? 0.5 : 1, cursor: 'pointer',
+        transition: 'opacity 220ms ease, transform 140ms cubic-bezier(0.22,1,0.36,1)',
       }}>
       <div style={{
-        position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%) rotate(2deg)',
-        width: 28, height: 12,
-        background: 'rgba(255,255,255,0.7)',
-        border: '0.5px solid rgba(0,0,0,0.05)',
+        position: 'absolute', top: -7, left: '50%', transform: 'translateX(-50%) rotate(2deg)',
+        width: 32, height: 14,
+        background: 'rgba(255,255,255,0.75)',
+        border: '0.5px solid rgba(0,0,0,0.06)',
+        borderRadius: 2,
       }} />
-      <div style={{ marginBottom: 4 }}>
-        <Icon name={item.icon || 'box'} size={18} color="rgba(61,58,54,0.55)" strokeWidth={1.6} />
+      <div style={{ marginBottom: 6 }}>
+        <Icon name={item.icon || 'box'} size={20} color="rgba(61,58,54,0.5)" strokeWidth={1.6} />
       </div>
       <div style={{
-        fontFamily: 'var(--font-serif)', fontWeight: 600, fontSize: 13,
-        color: 'var(--d-ink)', lineHeight: 1.15,
+        fontFamily: 'var(--font-serif)', fontWeight: 600, fontSize: 14,
+        color: 'var(--d-ink)', lineHeight: 1.2, flex: 1,
         textDecoration: item.done ? 'line-through' : 'none',
       }}>{item.name}</div>
       {item.note && (
         <div style={{
-          fontSize: 9.5, color: 'rgba(61,58,54,0.55)', marginTop: 2,
+          fontSize: 10.5, color: 'rgba(61,58,54,0.55)', marginTop: 2,
           fontStyle: 'italic', lineHeight: 1.2,
           textDecoration: item.done ? 'line-through' : 'none',
+          overflow: 'hidden', WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical',
         }}>{item.note}</div>
       )}
-      <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{
-          width: 18, height: 18, borderRadius: '50%',
+          width: 20, height: 20, borderRadius: '50%',
           background: color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 8, fontWeight: 700, color: '#fff',
+          fontSize: 8.5, fontWeight: 700, color: '#fff',
         }}>{initials}</div>
         <div style={{
-          width: 16, height: 16, borderRadius: '50%',
-          border: `1.5px solid ${item.done ? 'var(--d-ok)' : 'rgba(61,58,54,0.3)'}`,
-          background: item.done ? 'var(--d-ok)' : 'transparent',
+          width: 20, height: 20, borderRadius: '50%',
+          border: `1.5px solid ${item.done ? 'var(--d-ok)' : 'rgba(61,58,54,0.25)'}`,
+          background: item.done ? 'var(--d-ok)' : 'rgba(255,255,255,0.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: item.done ? 'checkPop 220ms cubic-bezier(0.22,1,0.36,1) both' : 'none',
         }}>
-          {item.done && <Icon name="check" size={10} color="#fff" strokeWidth={3} />}
+          {item.done && <Icon name="check" size={11} color="#fff" strokeWidth={3} />}
         </div>
       </div>
     </div>
@@ -169,21 +173,33 @@ export default function MercadoScreen() {
         <div style={{
           background: 'var(--d-card)', borderRadius: 18,
           border: '1px solid var(--d-line)', padding: '14px 16px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 600, lineHeight: 1 }}>
-              <span style={{ color: 'var(--d-terra-deep)' }}>{pending}</span>
-              <span style={{ fontSize: 14, color: 'var(--d-mute)' }}> / {total}</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 600, lineHeight: 1 }}>
+                <span style={{ color: 'var(--d-terra-deep)' }}>{pending}</span>
+                <span style={{ fontSize: 14, color: 'var(--d-mute)' }}> / {total}</span>
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--d-mute)', marginTop: 3 }}>por comprar</div>
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--d-mute)', marginTop: 4 }}>por comprar</div>
-          </div>
-          <div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600, lineHeight: 1, color: 'var(--d-sage-deep)' }}>
-              {total > 0 ? Math.round((total - pending) / total * 100) : 0}%
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 600, lineHeight: 1, color: 'var(--d-sage-deep)' }}>
+                {total > 0 ? Math.round((total - pending) / total * 100) : 0}%
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--d-mute)', marginTop: 3 }}>completado</div>
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--d-mute)', marginTop: 4 }}>completado</div>
           </div>
+          {total > 0 && (
+            <div style={{ height: 6, borderRadius: 999, background: 'var(--d-line)', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                width: `${Math.round((total - pending) / total * 100)}%`,
+                background: 'var(--d-sage)',
+                borderRadius: 999,
+                transition: 'width 400ms cubic-bezier(0.22,1,0.36,1)',
+              }} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -203,7 +219,7 @@ export default function MercadoScreen() {
             <div
               onClick={() => setShowAdd(true)}
               style={{
-                width: 100, height: 100, borderRadius: 8,
+                width: 128, height: 128, borderRadius: 8,
                 border: '2px dashed var(--d-mute-light)',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 color: 'var(--d-mute)', transform: 'rotate(-1deg)',

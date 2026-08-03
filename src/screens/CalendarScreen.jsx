@@ -111,19 +111,32 @@ export default function CalendarScreen() {
         </div>
       </div>
 
-      {/* Empty state */}
       {events.length === 0 && (
-        <div style={{ padding: '0 22px 14px' }}>
+        <div style={{ padding: '0 22px 14px', animation: 'fadeIn 200ms ease both' }}>
           <div style={{
             background: 'var(--d-card-warm)', border: '1px solid var(--d-line)',
-            borderRadius: 18, padding: '14px 16px', textAlign: 'center', color: 'var(--d-mute)', fontSize: 13,
+            borderRadius: 20, padding: '28px 20px', textAlign: 'center',
           }}>
-            Sin eventos para este día.{' '}
-            <span
-              onClick={() => setAddOpen(true)}
-              style={{ color: 'var(--d-terra-deep)', fontWeight: 600, cursor: 'pointer' }}>
-              + Agregar
-            </span>
+            <div style={{
+              width: 52, height: 52, borderRadius: 16,
+              background: 'var(--d-line)', margin: '0 auto 14px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon name="calendar" size={26} color="var(--d-mute)" strokeWidth={1.6} />
+            </div>
+            <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>Sin eventos</div>
+            <div style={{ fontSize: 13, color: 'var(--d-mute)', marginBottom: 20, textTransform: 'capitalize' }}>
+              {selectedDayLabel}
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {['Comida familiar', 'Cita médica', 'Recordatorio'].map(s => (
+                <button key={s} onClick={() => setAddOpen(true)} style={{
+                  height: 34, padding: '0 14px', borderRadius: 999,
+                  background: 'var(--d-cream)', border: '1px solid var(--d-line-strong)',
+                  fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: 'var(--d-ink-soft)',
+                }}>+ {s}</button>
+              ))}
+            </div>
           </div>
         </div>
       )}

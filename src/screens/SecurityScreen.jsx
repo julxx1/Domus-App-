@@ -107,28 +107,35 @@ export default function SecurityScreen() {
         ))}
       </div>
 
-      {/* go2rtc setup hint if no cameras in DB */}
       {cameras.length === 0 && (
         <div style={{ margin: '18px 22px 0' }}>
           <div style={{
             background: 'var(--d-card-warm)', border: '1px solid var(--d-line)',
-            borderRadius: 18, padding: '16px',
+            borderRadius: 20, padding: '20px',
           }}>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-              <Icon name="wifi" size={20} color="var(--d-terra-deep)" />
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 4 }}>Conecta tus cámaras IP</div>
-                <div style={{ fontSize: 12, color: 'var(--d-mute)', lineHeight: 1.5 }}>
-                  Instala <strong>go2rtc</strong> en tu red local y configura tus cámaras RTSP. Las tarjetas de arriba son de demostración.
-                </div>
-                <div style={{
-                  marginTop: 10, fontFamily: 'monospace', fontSize: 11,
-                  background: 'var(--d-ink)', color: 'var(--d-cream)',
-                  padding: '8px 12px', borderRadius: 8,
-                }}>
-                  go2rtc -config go2rtc.yaml
-                </div>
-              </div>
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>Conecta una cámara</div>
+            <div style={{ fontSize: 13, color: 'var(--d-mute)', lineHeight: 1.55, marginBottom: 16 }}>
+              Busca cámaras disponibles en tu red o ingresa sus datos manualmente.
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button style={{
+                flex: 1, height: 44, borderRadius: 12,
+                background: 'var(--d-terra)', color: '#fff',
+                border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}>
+                <Icon name="wifi" size={15} color="#fff" strokeWidth={2} />
+                Buscar cámaras
+              </button>
+              <button style={{
+                flex: 1, height: 44, borderRadius: 12,
+                background: 'var(--d-card)', color: 'var(--d-ink)',
+                border: '1px solid var(--d-line)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}>
+                <Icon name="edit" size={15} color="var(--d-ink)" strokeWidth={2} />
+                Configurar
+              </button>
             </div>
           </div>
         </div>

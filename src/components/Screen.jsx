@@ -6,11 +6,15 @@ export default function Screen({ children, hideTabs = false, scroll = true, styl
       height: '100%', width: '100%', maxWidth: 420, margin: '0 auto',
       display: 'flex', flexDirection: 'column',
       overflow: 'hidden', background: 'var(--d-cream)',
-      position: 'relative', ...style,
+      position: 'relative',
+      animation: 'screenEnter 260ms cubic-bezier(0.22,1,0.36,1) both',
+      ...style,
     }}>
       <div style={{
-        flex: 1, overflowY: scroll ? 'auto' : 'hidden', overflowX: 'hidden',
-        paddingBottom: hideTabs ? 20 : 100,
+        flex: 1,
+        overflowY: scroll ? 'auto' : 'hidden',
+        overflowX: 'hidden',
+        paddingBottom: hideTabs ? 20 : 112,
       }}>
         {children}
       </div>
