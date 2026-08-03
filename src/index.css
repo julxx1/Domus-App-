@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,500;1,6..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --d-cream: #F5EFE6;
+  --d-cream-deep: #EFE7D8;
+  --d-card: #FBF6EC;
+  --d-card-warm: #F7EFE2;
+  --d-paper: #FFFCF7;
+  --d-terra: #C97B4A;
+  --d-terra-deep: #A35E33;
+  --d-terra-soft: #E8B89A;
+  --d-sage: #7A8B6F;
+  --d-sage-deep: #5C6E54;
+  --d-sage-soft: #B8C6AC;
+  --d-clay: #B85842;
+  --d-ochre: #D4A256;
+  --d-blush: #D4877A;
+  --d-ink: #3D3A36;
+  --d-ink-soft: #5A554F;
+  --d-mute: #8A7E72;
+  --d-mute-light: #B9AFA2;
+  --d-line: #E5DBC8;
+  --d-line-strong: #D4C6AE;
+  --d-ok: #6B8E5C;
+  --d-warn: #C77F3C;
+  --d-danger: #B85842;
+
+  --m-mama: #7A8B6F;
+  --m-papa: #C97B4A;
+  --m-sofia: #B85842;
+  --m-diego: #D4A256;
+  --m-lucia: #D4877A;
+
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+
+  --font-serif: 'Newsreader', 'Times New Roman', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.domus-dark {
+  --d-cream: #1E1916;
+  --d-cream-deep: #1A1612;
+  --d-card: #28221D;
+  --d-card-warm: #2E2620;
+  --d-paper: #2A2420;
+  --d-ink: #F2EADC;
+  --d-ink-soft: #D6CCB9;
+  --d-mute: #998C7B;
+  --d-mute-light: #6B6259;
+  --d-line: #3A322B;
+  --d-line-strong: #4A4038;
+  --d-terra-soft: #6B4B33;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { margin: 0; padding: 0; height: 100%; width: 100%; }
+body {
+  font-family: var(--font-sans);
+  background: var(--d-cream);
+  color: var(--d-ink);
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+h1, h2, h3, .serif {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 0;
+}
+.serif-italic { font-family: var(--font-serif); font-style: italic; font-weight: 500; }
+.eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--d-mute);
+}
+.muted { color: var(--d-mute); }
+button, input, textarea { font: inherit; color: inherit; }
+
+::-webkit-scrollbar { width: 0; height: 0; }
+* { scrollbar-width: none; }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.7; }
+}
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
