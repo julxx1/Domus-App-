@@ -14,7 +14,7 @@ import { DutyForm } from '@/components/agenda/DutyForm'
 import { repositories } from '@/lib/repositories'
 import { useAsyncData } from '@/lib/hooks/useRepo'
 import { todayKey } from '@/lib/utils/date'
-import type { Duty } from '@/lib/domain/types'
+import { canInvite, type Duty } from '@/lib/domain/types'
 import { colors, fonts, radii, spacing } from '@/theme/tokens'
 
 /**
@@ -33,6 +33,11 @@ export default function DeberesScreen() {
   const duties = useAsyncData(() => repositories.duties.listForDate(today), [today])
   const completions = useAsyncData(() => repositories.duties.listCompletions(today), [today])
   const profile = useAsyncData(() => repositories.profile.get(), [])
+
+  // Crear/editar/eliminar deberes está restringido a padres/admin en la DB
+  // (mismo modelo que Invitar miembro) — la UI oculta los controles, la RLS
+  // sigue siendo la que realmente decide.
+  const canManage = canInvite(profile.data?.role)
 
   const dutyList = duties.data ?? []
   const doneIds = useMemo(
@@ -81,13 +86,15 @@ export default function DeberesScreen() {
           <Eyebrow>Responsabilidades</Eyebrow>
           <Title>Deberes diarios</Title>
         </View>
-        <PressableScale
-          onPress={() => setDutySheet({ open: true, editing: null })}
-          accessibilityLabel="Nuevo deber"
-          style={styles.addBtn}
-        >
-          <Icon name="plus" size={18} color="#fff" strokeWidth={2.2} />
-        </PressableScale>
+        {canManage ? (
+          <PressableScale
+            onPress={() => setDutySheet({ open: true, editing: null })}
+            accessibilityLabel="Nuevo deber"
+            style={styles.addBtn}
+          >
+            <Icon name="plus" size={18} color="#fff" strokeWidth={2.2} />
+          </PressableScale>
+        ) : null}
       </Stagger>
 
       {dutyList.length > 0 ? (
@@ -120,6 +127,7 @@ export default function DeberesScreen() {
                 key={duty.id}
                 duty={duty}
                 checked={doneIds.has(duty.id)}
+                canManage={canManage}
                 onToggle={() => void toggleDuty(duty.id)}
                 onEdit={() => setDutySheet({ open: true, editing: duty })}
                 onDelete={() => void removeDuty(duty.id)}
@@ -150,12 +158,14 @@ export default function DeberesScreen() {
 function DutyRow({
   duty,
   checked,
+  canManage,
   onToggle,
   onEdit,
   onDelete,
 }: {
   duty: Duty
   checked: boolean
+  canManage: boolean
   onToggle: () => void
   onEdit: () => void
   onDelete: () => void
@@ -175,12 +185,16 @@ function DutyRow({
         </Text>
       </View>
       <Check checked={checked} onToggle={onToggle} accessibilityLabel={duty.title} />
-      <PressableScale onPress={onEdit} scaleTo={0.93} accessibilityLabel="Editar" style={styles.iconBtn}>
-        <Icon name="pencil" size={14} color={colors.mute} />
-      </PressableScale>
-      <PressableScale onPress={onDelete} scaleTo={0.93} accessibilityLabel="Eliminar" style={styles.iconBtn}>
-        <Icon name="trash" size={14} color={colors.clay} />
-      </PressableScale>
+      {canManage ? (
+        <>
+          <PressableScale onPress={onEdit} scaleTo={0.93} accessibilityLabel="Editar" style={styles.iconBtn}>
+            <Icon name="pencil" size={14} color={colors.mute} />
+          </PressableScale>
+          <PressableScale onPress={onDelete} scaleTo={0.93} accessibilityLabel="Eliminar" style={styles.iconBtn}>
+            <Icon name="trash" size={14} color={colors.clay} />
+          </PressableScale>
+        </>
+      ) : null}
     </View>
   )
 }

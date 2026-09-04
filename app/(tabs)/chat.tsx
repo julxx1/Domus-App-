@@ -13,32 +13,67 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import Stagger from '@/components/Stagger'
 import Icon from '@/components/Icon'
-import { EmptyState, Eyebrow, PressableScale, Title } from '@/components/Shared'
+import { EmptyState, PressableScale, Title } from '@/components/Shared'
 import { repositories } from '@/lib/repositories'
 import { useAsyncData } from '@/lib/hooks/useRepo'
+import { supabase } from '@/lib/supabase/client'
+import { rowToMessage } from '@/lib/repositories/supabase/messages'
 import type { Message } from '@/lib/domain/types'
 import { colors, fonts, motion, radii, spacing } from '@/theme/tokens'
 
-const CHANNEL_ID = 'familia'
 const TAB_BAR_CLEARANCE = 80
 
 /**
- * Chat (tab 3).
+ * Chat (tab 3) — real, shared with the household via Supabase Realtime.
  *
- * The messages here are LOCAL AND TEMPORARY — they never leave the phone and
- * nothing is realtime. The banner says so explicitly rather than implying a
- * working family chat. The composer, bubbles, scroll and keyboard behaviour are
- * real, so replacing the repository with Supabase later needs no UI changes.
+ * Every household gets exactly one conversation ("Familia"), created on
+ * first open by `repositories.messages.listChannels()` (find-or-create).
+ * New messages arrive live via a `postgres_changes` subscription rather than
+ * polling/reload — `send()` only inserts; the subscription is what actually
+ * appends the bubble, for the sender too, so there's a single code path for
+ * "a message showed up" instead of an optimistic-append plus a possible
+ * realtime duplicate.
  */
 export default function ChatScreen() {
   const insets = useSafeAreaInsets()
   const [draft, setDraft] = useState('')
+  const [sending, setSending] = useState(false)
   const scrollRef = useRef<ScrollView>(null)
   const didInitialScroll = useRef(false)
 
   const profile = useAsyncData(() => repositories.profile.get(), [])
-  const messages = useAsyncData(() => repositories.messages.listMessages(CHANNEL_ID), [])
+  const channels = useAsyncData(() => repositories.messages.listChannels(), [])
+  const channelId = channels.data?.[0]?.id ?? null
+
+  const messages = useAsyncData(
+    () => (channelId ? repositories.messages.listMessages(channelId) : Promise.resolve([] as Message[])),
+    [channelId]
+  )
   const list = messages.data ?? []
+
+  useEffect(() => {
+    if (!channelId) return
+    const sub = supabase
+      .channel(`messages:${channelId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${channelId}` },
+        payload => {
+          const incoming = rowToMessage(payload.new as Parameters<typeof rowToMessage>[0])
+          messages.set(prev => {
+            const current = prev ?? []
+            if (current.some(m => m.id === incoming.id)) return current
+            return [...current, incoming]
+          })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(sub)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId])
 
   useEffect(() => {
     if (list.length === 0) return
@@ -51,49 +86,46 @@ export default function ChatScreen() {
 
   const send = useCallback(async () => {
     const text = draft.trim()
-    if (!text) return
+    if (!text || !channelId || !profile.data || sending) return
     setDraft('')
-    await repositories.messages.send(CHANNEL_ID, profile.data?.id ?? 'me', text)
-    await messages.reload()
-  }, [draft, messages, profile.data?.id])
+    setSending(true)
+    try {
+      await repositories.messages.send(channelId, profile.data.id, text)
+      // Bubble appears via the realtime subscription above, not here.
+    } finally {
+      setSending(false)
+    }
+  }, [draft, channelId, profile.data, sending])
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <Stagger index={0} style={styles.header}>
-        <Eyebrow>Conversaciones</Eyebrow>
         <Title>Chat</Title>
       </Stagger>
-
-      <View style={styles.notice}>
-        <Icon name="bell" size={13} color={colors.terraDeep} strokeWidth={2} />
-        <Text style={styles.noticeText}>
-          Mensajes locales de prueba. Aún no se sincronizan con tu familia.
-        </Text>
-      </View>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={insets.top + 8}
       >
         <ScrollView
           ref={scrollRef}
           style={{ flex: 1 }}
           contentContainerStyle={styles.messages}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
           {list.length === 0 ? (
             <EmptyState
               title="Aún no hay mensajes"
-              description="Escribe abajo para probar la interfaz."
+              description="Escribe abajo para empezar la conversación de tu hogar."
             />
           ) : (
             list.map((message, index) => (
               <Bubble
                 key={message.id}
                 message={message}
-                mine={message.senderId === (profile.data?.id ?? 'me')}
+                mine={message.senderId === profile.data?.id}
                 // Only messages added after the initial render animate in.
                 animate={didInitialScroll.current && index === list.length - 1}
               />
@@ -113,11 +145,11 @@ export default function ChatScreen() {
           />
           <PressableScale
             onPress={() => void send()}
-            disabled={draft.trim().length === 0}
+            disabled={draft.trim().length === 0 || sending}
             accessibilityLabel="Enviar"
             style={[
               styles.send,
-              { backgroundColor: draft.trim() ? colors.terra : colors.lineStrong },
+              { backgroundColor: draft.trim() && !sending ? colors.terra : colors.lineStrong },
             ]}
           >
             <Icon name="send" size={17} color="#fff" strokeWidth={2} />
@@ -158,20 +190,7 @@ function Bubble({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.cream },
   header: { paddingHorizontal: spacing.screenX, paddingTop: 16, paddingBottom: 14 },
-  notice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginHorizontal: spacing.screenX,
-    marginBottom: 12,
-    padding: 10,
-    borderRadius: radii.sm + 2,
-    backgroundColor: 'rgba(201,123,74,0.10)',
-    borderWidth: 1,
-    borderColor: 'rgba(201,123,74,0.22)',
-  },
-  noticeText: { flex: 1, fontFamily: fonts.sans, fontSize: 11.5, color: colors.terraDeep, lineHeight: 16 },
-  messages: { paddingHorizontal: spacing.screenX, paddingBottom: 12, gap: 8 },
+  messages: { paddingHorizontal: spacing.screenX, paddingBottom: 12, gap: 8, flexGrow: 1 },
   bubbleRow: { flexDirection: 'row' },
   bubbleRowMine: { justifyContent: 'flex-end' },
   bubbleRowTheirs: { justifyContent: 'flex-start' },

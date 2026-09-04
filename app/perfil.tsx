@@ -11,14 +11,13 @@ import { Eyebrow, PressableScale, SectionTitle, Title } from '@/components/Share
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { repositories } from '@/lib/repositories'
 import { useAsyncData } from '@/lib/hooks/useRepo'
+import { canInvite } from '@/lib/domain/types'
 import { colors, fonts, radii, spacing } from '@/theme/tokens'
 
 const AVATAR_COLORS = [
   '#C97B4A', '#7A8B6F', '#B85842', '#D4A256',
   '#D4877A', '#5B7BA5', '#7B5B9A', '#4A8B6F',
 ]
-
-const CAN_INVITE_ROLES = ['Mamá', 'Papá', 'Abuelo', 'Abuela', 'Admin']
 
 /**
  * Cuenta — opened from the avatar on Inicio, never a sixth tab. Real Supabase
@@ -95,7 +94,7 @@ export default function CuentaScreen() {
   }
 
   const initial = firstName.trim() ? firstName.trim()[0]!.toUpperCase() : '·'
-  const canInvite = profile ? CAN_INVITE_ROLES.includes(profile.role) : false
+  const showInvite = canInvite(profile?.role)
   const memberCount = 1 + (members.data?.length ?? 0)
 
   return (
@@ -193,7 +192,7 @@ export default function CuentaScreen() {
           <Icon name="chev-r" size={17} color={colors.mute} />
         </PressableScale>
 
-        {canInvite ? (
+        {showInvite ? (
           <PressableScale
             onPress={() => router.push('/invitar')}
             accessibilityLabel="Invitar miembro"

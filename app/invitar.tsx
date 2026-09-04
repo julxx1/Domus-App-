@@ -11,18 +11,9 @@ import { Chip, PrimaryButton } from '@/components/Form'
 import { ErrorBanner } from '@/components/auth/AuthChrome'
 import { supabase } from '@/lib/supabase/client'
 import { translateAuthError } from '@/lib/auth/errors'
+import { INVITE_ROLES } from '@/lib/domain/types'
 import type { HouseholdInvitationRow, InvitationRole } from '@/lib/supabase/types'
 import { colors, fonts, radii, spacing } from '@/theme/tokens'
-
-const ROLE_OPTIONS: { value: InvitationRole; label: string }[] = [
-  { value: 'Miembro', label: 'Miembro' },
-  { value: 'Mamá', label: 'Mamá' },
-  { value: 'Papá', label: 'Papá' },
-  { value: 'Hijo', label: 'Hijo' },
-  { value: 'Hija', label: 'Hija' },
-  { value: 'Abuelo', label: 'Abuelo' },
-  { value: 'Abuela', label: 'Abuela' },
-]
 
 export default function InvitarScreen() {
   const router = useRouter()
@@ -79,8 +70,8 @@ export default function InvitarScreen() {
           <ErrorBanner message={error} />
           <Text style={styles.label}>ROL</Text>
           <View style={styles.chips}>
-            {ROLE_OPTIONS.map(opt => (
-              <Chip key={opt.value} label={opt.label} active={role === opt.value} onPress={() => setRole(opt.value)} />
+            {INVITE_ROLES.map(r => (
+              <Chip key={r} label={r} active={role === r} onPress={() => setRole(r as InvitationRole)} />
             ))}
           </View>
           <PrimaryButton label="Generar código" onPress={() => void generate()} disabled={loading} />

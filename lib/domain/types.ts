@@ -14,8 +14,22 @@ export type ID = string
 export const ROLES = ['Mamá', 'Papá', 'Hijo', 'Hija', 'Abuelo', 'Abuela', 'Miembro', 'Admin'] as const
 export type Role = (typeof ROLES)[number]
 
-/** Roles allowed to create/assign duties and manage the household — mirrors `is_parent_or_admin()`. */
+/**
+ * Roles allowed to create/assign duties, manage the household, and invite
+ * members — single source of truth mirroring the DB's
+ * `private.can_invite_to_household()` role list. Every screen that gates a
+ * privileged action on role (Cuenta, Mi familia) must check membership in
+ * this array, never redeclare its own copy — the UI showing/hiding a button
+ * is convenience, not security; the DB is still the real gate either way.
+ */
 export const PARENT_ROLES: readonly Role[] = ['Mamá', 'Papá', 'Abuelo', 'Abuela', 'Admin']
+
+export function canInvite(role: Role | null | undefined): boolean {
+  return role != null && PARENT_ROLES.includes(role)
+}
+
+/** Roles a household invitation can grant — every role except Admin (assigned only at household creation). */
+export const INVITE_ROLES: readonly Role[] = ROLES.filter(r => r !== 'Admin')
 
 export interface Profile {
   id: ID
@@ -105,7 +119,7 @@ export interface MarketItem {
   createdAt: string
 }
 
-// ── Chat (local temporal — ver README de repositories) ────────────────────────
+// ── Chat ─────────────────────────────────────────────────────────────────────
 
 export interface Message {
   id: ID
@@ -113,8 +127,6 @@ export interface Message {
   senderId: ID
   text: string
   createdAt: string
-  /** Marks drafts written before a real backend exists. */
-  local: true
 }
 
 export interface Channel {

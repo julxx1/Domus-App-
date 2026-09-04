@@ -37,6 +37,12 @@ export function translateAuthError(raw: unknown): string {
   if (m.includes('owner_has_members'))
     return 'Eres el administrador de tu hogar y hay otros miembros en él. Transfiere la administración o pídeles que se unan a otra familia antes de eliminar tu cuenta.'
 
+  // generic RLS denial — surfaces when a non-privileged role tries an action
+  // the UI already hides for them (e.g. someone bypassing the hidden button),
+  // or a stale session tries to write to a household it no longer belongs to.
+  if (m.includes('row-level security') || m.includes('permission denied') || m.includes('violates row-level'))
+    return 'No tienes permiso para hacer esto.'
+
   return message || 'Ocurrió un error. Inténtalo de nuevo.'
 }
 

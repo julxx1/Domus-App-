@@ -9,10 +9,8 @@ import { PrimaryButton } from '@/components/Form'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { repositories } from '@/lib/repositories'
 import { useAsyncData } from '@/lib/hooks/useRepo'
-import type { Member } from '@/lib/domain/types'
+import { canInvite, type Member } from '@/lib/domain/types'
 import { colors, fonts, radii, spacing } from '@/theme/tokens'
-
-const CAN_INVITE_ROLES = ['Mamá', 'Papá', 'Abuelo', 'Abuela', 'Admin']
 
 export default function MiFamiliaScreen() {
   const router = useRouter()
@@ -23,7 +21,7 @@ export default function MiFamiliaScreen() {
     ? { id: profile.id, name: profile.name, role: profile.role, color: profile.color }
     : null
   const everyone = self ? [self, ...(members.data ?? [])] : members.data ?? []
-  const canInvite = profile ? CAN_INVITE_ROLES.includes(profile.role) : false
+  const showInvite = canInvite(profile?.role)
 
   return (
     <Screen hideTabs>
@@ -59,7 +57,7 @@ export default function MiFamiliaScreen() {
         </View>
       </Stagger>
 
-      {canInvite ? (
+      {showInvite ? (
         <Stagger index={2} style={styles.block}>
           <PrimaryButton label="Invitar miembro" onPress={() => router.push('/invitar')} />
         </Stagger>
